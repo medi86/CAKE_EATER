@@ -3,7 +3,7 @@ class NetworkGames
     InvalidAscii = Class.new RuntimeError
 
     class Tile
-      attr_reader :x, :y
+      attr_reader :x, :y, :plan
       def initialize(x:, y:)
         move! x: x, y: y
       end
@@ -13,7 +13,18 @@ class NetworkGames
       def position
         {x: x, y: y}
       end
-      def move!(x: x, y: y)
+      def plan_move(x: x(), y: y())
+        @plan = {x: x, y: y}
+      end
+      def clear_plan!
+        @plan = nil
+      end
+      def perform_move!
+        move! @plan if move_planned?
+      ensure
+        clear_plan!
+      end
+      def move!(x: x(), y: y())
         @x, @y = x, y
       end
       def relative_position(x:, y:)
@@ -24,6 +35,14 @@ class NetworkGames
       end
       def type
         self.class.name.to_s.split("::").last.gsub(/([a-z])([A-Z])/, "\\1_\\2").downcase.intern
+      end
+      def move_planned?
+        @plan && @plan.kind_of?(Hash) && plan.keys.sort == [:x, :y]
+      end
+      def grid_coords
+        [-1, 0, 1].flat_map do |yoff|
+          [-1, 0, 1].map { |xoff| relative_position x: xoff, y: yoff }
+        end
       end
     end
 
@@ -61,7 +80,6 @@ class NetworkGames
     def initialize(width:, height:)
       @width  = width
       @height = height
-      @queue  = []
       @tiles  = []
       yield self if block_given?
     end
@@ -76,12 +94,13 @@ class NetworkGames
       self
     end
 
-    def at(x:, y:)
-      if x < 0 || y < 0 || width <= x || height <= y
-        return [OffMap.new(x: x, y: y)]
-      else
-        @tiles.select { |obj| obj.at? x: x, y: y }
-      end
+    def at(coords)
+      return [OffMap.new(coords)] unless on_board? coords
+      @tiles.select { |obj| obj.at? coords }
+    end
+
+    def on_board?(x:, y:)
+      0 <= x && 0 <= y && x < width && y < height
     end
 
     def at_relative(obj, x:0, y:0)
@@ -94,20 +113,17 @@ class NetworkGames
 
     def find_empties
       width.times.flat_map do |x|
-        height.times
-              .select { |y| at(x: x, y: y).empty? }
-              .map    { |y| [x, y] }
+        height.times.select { |y| at(x: x, y: y).empty? }.map { |y| [x, y] }
       end
     end
 
     def update
-      @queue.each { |object, coords| object.move! coords }
-      @queue = []
+      @tiles.each { |object| object.perform_move! }
       self
     end
 
-    def move_relative(obj, xoff: 0, yoff: 0)
-      @queue << [obj, obj.relative_position(x: xoff, y: yoff)]
+    def move_relative(obj, x: 0, y: 0)
+      obj.plan_move obj.relative_position(x: x, y: y)
       self
     end
 

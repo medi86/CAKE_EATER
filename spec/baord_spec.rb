@@ -87,22 +87,22 @@ RSpec.describe 'NetworkGames::Board' do
     robot = board.at(x: 0, y: 0)[0]
     assert_robot board, x: 0, y: 0
 
-    board.move_relative(robot, xoff: 1)
+    board.move_relative(robot, x: 1)
     assert_robot board, x: 0, y: 0
     board.update
     assert_robot board, x: 1, y: 0
 
-    board.move_relative(robot, yoff: 1)
+    board.move_relative(robot, y: 1)
     assert_robot board, x: 1, y: 0
     board.update
     assert_robot board, x: 1, y: 1
 
-    board.move_relative(robot, xoff: -1)
+    board.move_relative(robot, x: -1)
     assert_robot board, x: 1, y: 1
     board.update
     assert_robot board, x: 0, y: 1
 
-    board.move_relative(robot, yoff: -1)
+    board.move_relative(robot, y: -1)
     assert_robot board, x: 0, y: 1
     board.update
     assert_robot board, x: 0, y: 0
@@ -111,5 +111,17 @@ RSpec.describe 'NetworkGames::Board' do
   it 'enumerates over its elements' do
     board = board_for "R W"
     expect(board.map &:type).to eq [:robot, :wall]
+  end
+
+  it 'forgets the plan after implementing it' do
+    board = board_for "R  "
+    robot = board.at(x: 0, y: 0)[0]
+    assert_robot board, x: 0, y: 0
+    board.move_relative(robot, x: 1)
+    assert_robot board, x: 0, y: 0
+    board.update
+    assert_robot board, x: 1, y: 0
+    board.update
+    assert_robot board, x: 1, y: 0
   end
 end

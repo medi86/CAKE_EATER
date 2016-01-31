@@ -186,6 +186,7 @@ RSpec.describe 'NetworkGames::CakeEater' do
 
     # into walls
     ce.move_east 'p1'
+    expect(ce.look('p1')[:x]).to eq 0
     ce.tick
     expect(ce.look('p1')[:x]).to eq 0
 

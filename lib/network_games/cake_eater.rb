@@ -8,24 +8,23 @@ class NetworkGames
     end
 
     class Robot < Board::Robot
-      attr_reader :name, :move, :score, :num_moves
+      attr_reader :name, :score, :num_moves
       def initialize(name:, score: 0, num_moves: 0, **kwrest)
         super(**kwrest)
         @name      = name
         @score     = score
         @num_moves = num_moves
       end
-      def will_move(direction)
-        @move = direction
-      end
-      def make_move
+      def perform_move!
+        return unless plan
         @num_moves += 1
-        move_made = move
-        @move = nil
-        move_made
+        @score     += 1 if plan == :eat
+        super
+      ensure
+        clear_plan!
       end
-      def eat(cake)
-        @score += 1
+      def plan_to_eat
+        @plan = :eat
       end
     end
 
@@ -45,58 +44,46 @@ class NetworkGames
       { name: name, x: x, y: y, score: 0 }
     end
 
-    def move_north(name) robots[name].will_move xoff:  0, yoff: -1 end
-    def move_east(name)  robots[name].will_move xoff:  1, yoff:  0 end
-    def move_south(name) robots[name].will_move xoff:  0, yoff:  1 end
-    def move_west(name)  robots[name].will_move xoff: -1, yoff:  0 end
+    def move_north(name) board.move_relative robots[name], x:  0, y: -1 end
+    def move_east(name)  board.move_relative robots[name], x:  1, y:  0 end
+    def move_south(name) board.move_relative robots[name], x:  0, y:  1 end
+    def move_west(name)  board.move_relative robots[name], x: -1, y:  0 end
 
     def tick
       robots
         .map { |name, robot| robot }
-        .select { |robot| robot.move }
         .each { |robot|
-          if robot.move == :eat
+          if robot.plan == :eat
             cake = board.at(robot.position).find { |element| element.type == :cake }
             next unless cake
             board.remove cake
-            robot.make_move
-            robot.eat cake
+            robot.perform_move!
           else
-            x = robot.move[:xoff]
-            y = robot.move[:yoff]
-            xy = robot.relative_position(x: x, y: y)
-            next unless board.traversable?(xy)
-            board.move_relative robot, robot.make_move
+            next unless robot.move_planned?
+            next unless board.traversable?(robot.plan)
+            robot.perform_move!
           end
-          robot.will_move nil
         }
+        .each(&:clear_plan!)
       board.update
     end
 
     def look(name)
       robot = robots[name]
-      xy    = robot.position
       { name:  robot.name,
         score: robot.score,
-        x: xy[:x],
-        y: xy[:y],
-        grid: [-1, 0, 1].flat_map { |yoff|
-          [-1, 0, 1].map { |xoff|
-            xcrnt    = xy[:x] + xoff
-            ycrnt    = xy[:y] + yoff
-            contents = board.at(x: xcrnt, y: ycrnt).map do |obj|
-              content = {type: obj.type}
-              content[:name] = obj.name if obj.type == :robot
-              content
-            end
-            {x: xcrnt, y: ycrnt, contents: contents }
+        **robot.position,
+        grid: robot.grid_coords.map { |coords|
+          { **coords, contents: board.at(coords).map { |obj|
+              {type: obj.type}.tap { |h| h[:name] = obj.name if obj.type == :robot }
+            }
           }
         }
       }
     end
 
     def eat_cake(name)
-      robots[name].will_move :eat
+      robots[name].plan_to_eat
     end
 
     def over?
