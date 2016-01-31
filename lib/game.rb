@@ -3,16 +3,18 @@ class Game
     InvalidAscii = Class.new RuntimeError
 
     def self.from_ascii(ascii, tiles:)
-      rows = ascii.lines.map(&:chomp).map(&:chars)
-      new width: rows.fetch(0, []).length, height: rows.length do |board|
-        board.each_tile do |tile|
-          char  = rows[tile.y][tile.x]
-          klass = tiles.fetch(char) do
+      rows  = ascii.lines.map(&:chomp).map(&:chars)
+      board = new width: rows.fetch(0, []).length, height: rows.length
+      rows.each_with_index do |row, y|
+        row.each_with_index do |char, x|
+          klass = tiles.fetch(rows[y][x]) do
             raise InvalidAscii, "#{char.inspect} not in #{tiles.keys.inspect}"
           end
-          tile << klass.new(tile) if klass
+          next unless klass
+          board.add klass.new, x: x, y: y
         end
       end
+      board
     end
 
     attr_reader :width, :height
@@ -20,151 +22,77 @@ class Game
       @width  = width
       @height = height
       @queue  = []
-      @rows   = Array.new(height) do |y|
-        Array.new(width) { |x| Tile.new x: x, y: y, board: self }
-      end
+      @tiles  = {}
       yield self if block_given?
     end
 
-    def inspect
-      "<#{self.class} #{@rows.flatten.map { |t| "\n  #{t.inspect}" }.join}>"
+    def add(obj, x:, y:)
+      @tiles[obj.object_id] = [obj, x, y]
     end
 
-    def each_tile
-      @rows.each do |row|
-        row.each { |tile| yield tile }
-      end
+    def at(x:, y:)
+      return [Offmap.new] if x < 0 || y < 0 || width <= x || height <= y
+      @tiles.select { |id, (obj, objx, objy)| x == objx && y == objy }
+            .map    { |id, (obj, objx, objy)| obj }
     end
 
-    def [](x, y)
-      return nil if x < 0
-      return nil if width <= x
-      return nil if y < 0
-      return nil if height <= y
-      @rows[y][x]
+    def at_relative(obj, x:0, y:0)
+      x, y = relative_position(obj, x: x, y: y)
+      at x: x, y: y
     end
 
-    def enqueue(object, action)
-      @queue << [object, action]
+    def traversable?(x:, y:)
+      at(x: x, y: y).all? &:traversable?
     end
 
     def update
-      @queue.each do |object, action|
-        old_tile = object.tile
-        case action
-        when :move_east  then new_tile = old_tile.east
-        when :move_west  then new_tile = old_tile.west
-        when :move_north then new_tile = old_tile.north
-        when :move_south then new_tile = old_tile.south
-        else raise "Invalid action! #{action.inspect} for #{object.inspect}"
-        end
-        new_tile << old_tile.delete(object)
+      @queue.each do |object, x, y|
+        @tiles[object.object_id] = [object, x, y]
       end
       @queue = []
       self
     end
-  end
-end
 
-class Game
-  class Board
-    class Tile
-      attr_reader :x, :y
-      def initialize(x:, y:, board:)
-        @x, @y = x, y
-        @board = board
-        @elements = []
-      end
-
-      def <<(element)
-        @elements << element
-        element.tile = self
-        self
-      end
-
-      def delete(element)
-        @elements.delete element
-        element.tile = nil
-        element
-      end
-
-      def [](index)
-        @elements[index]
-      end
-
-      def inspect
-        "#<Tile x=#{x}, y=#{y} #{@elements.inspect}>"
-      end
-
-      def traversable?
-        @elements.all? &:traversable?
-      end
-
-      def east()  @board[x+1,   y] end
-      def west()  @board[x-1,   y] end
-      def north() @board[x,   y-1] end
-      def south() @board[x,   y+1] end
-      def enqueue(object, action)
-        @board.enqueue object, action
-      end
+    def relative_position(obj, x:0, y:0)
+      _, objx, objy = @tiles[obj.object_id]
+      [objx+x, objy+y]
     end
+
+    def move_east(obj)  @queue << [obj, *relative_position(obj, x:  1)] end
+    def move_west(obj)  @queue << [obj, *relative_position(obj, x: -1)] end
+    def move_south(obj) @queue << [obj, *relative_position(obj, y:  1)] end
+    def move_north(obj) @queue << [obj, *relative_position(obj, y: -1)] end
   end
 end
 
-class Game
-  class Board
-    class Element
-      attr_accessor :tile
-      def initialize(tile)
-        self.tile = tile
-      end
-      def type
-        @type ||= self.class.to_s.downcase.split("::").last.intern
-      end
-      def inspect
-        "#<#{self.class.name.split("::").last}>"
-      end
-      def traversable?
-        true
-      end
-      def x
-        tile.x
-      end
-      def y
-        tile.y
-      end
-      def enqueue(action)
-        tile.enqueue self, action
-      end
-    end
-  end
-end
 
 class Game
   class Board
-    class Wall < Element
+    class Wall
       def traversable?
         false
       end
+      def type
+        :wall
+      end
     end
-  end
-end
 
-class Game
-  class Board
-    module Movable
-      def move_east()  enqueue :move_east  end
-      def move_south() enqueue :move_south end
-      def move_north() enqueue :move_north end
-      def move_west()  enqueue :move_west  end
+    class Robot
+      def traversable?
+        true
+      end
+      def type
+        :robot
+      end
     end
-  end
-end
 
-class Game
-  class Board
-    class Robot < Element
-      include Movable
+    class Offmap
+      def traversable?
+        false
+      end
+      def type
+        :off_map
+      end
     end
   end
 end
