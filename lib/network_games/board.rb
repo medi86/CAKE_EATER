@@ -86,19 +86,10 @@ class NetworkGames
       [objx+x, objy+y]
     end
 
-    def move_north(obj) move obj, :north end
-    def move_east(obj)  move obj, :east  end
-    def move_south(obj) move obj, :south end
-    def move_west(obj)  move obj, :west  end
-
-    def move(obj, direction)
-      xoff, yoff = 0, 0
-      yoff = -1 if direction == :north
-      xoff =  1 if direction == :east
-      yoff =  1 if direction == :south
-      xoff = -1 if direction == :west
-      x, y = relative_position(obj, x: xoff, y: yoff)
-      @queue << [obj, x, y]
+    def move_relative(obj, xoff: 0, yoff: 0)
+      x, y = locate obj
+      @queue << [obj, x+xoff, y+yoff]
+      self
     end
 
     def locate(obj)

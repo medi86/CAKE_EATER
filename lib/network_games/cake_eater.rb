@@ -44,10 +44,10 @@ class NetworkGames
       { name: name, x: x, y: y, score: 0 }
     end
 
-    def move_north(name) robots[name].will_move :north end
-    def move_east(name)  robots[name].will_move :east  end
-    def move_south(name) robots[name].will_move :south end
-    def move_west(name)  robots[name].will_move :west  end
+    def move_north(name) robots[name].will_move xoff:  0, yoff: -1 end
+    def move_east(name)  robots[name].will_move xoff:  1, yoff:  0 end
+    def move_south(name) robots[name].will_move xoff:  0, yoff:  1 end
+    def move_west(name)  robots[name].will_move xoff: -1, yoff:  0 end
 
     def tick
       robots
@@ -63,12 +63,10 @@ class NetworkGames
             robot.eat cake
           else
             x, y = board.locate(robot)
-            y -= 1 if robot.move == :north
-            x += 1 if robot.move == :east
-            y += 1 if robot.move == :south
-            x -= 1 if robot.move == :west
+            x += robot.move[:xoff]
+            y += robot.move[:yoff]
             next unless board.traversable?(x: x, y: y)
-            board.move robot, robot.make_move
+            board.move_relative robot, robot.make_move
           end
           robot.will_move nil
         }
