@@ -1,10 +1,7 @@
 require 'spec_helper'
-require 'network_games/board'
 require 'network_games/cake_eater'
 
 RSpec.describe 'NetworkGames::CakeEater' do
-  attr_reader :ce
-
   def ce_for(ascii_board)
     board = NetworkGames::Board.from_ascii ascii_board, tiles: {
       ' ' => nil,
