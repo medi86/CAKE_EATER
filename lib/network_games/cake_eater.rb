@@ -1,3 +1,4 @@
+require 'json'
 require 'network_games/board'
 
 class NetworkGames

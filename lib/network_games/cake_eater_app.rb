@@ -1,37 +1,7 @@
+require 'network_games/time_control'
 require 'network_games/cake_eater'
 
 class NetworkGames
-  class TimeControl
-    def initialize(time_class=Time)
-      @time_class = time_class
-      @countdowns = {}
-    end
-
-    def remaining(name)
-      start_time, duration, block = @countdowns.fetch name
-      duration - seconds_since(start_time)
-    end
-
-    def register(name, duration, &block)
-      @countdowns[name] = [current_time, duration, block]
-    end
-
-    def call(name)
-      start_time, duration, block = @countdowns.fetch name
-      block.call
-    end
-
-    private
-
-    def seconds_since(time)
-      current_time - time
-    end
-
-    def current_time
-      @time_class.now
-    end
-  end
-
   class CakeEaterApp
     attr_reader :board, :game, :timer, :status
     def initialize(registration_time: 5*60, timer: TimeControl.new, users:[])
