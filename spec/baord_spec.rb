@@ -1,5 +1,4 @@
-require 'simplecov'
-SimpleCov.start
+require 'spec_helper'
 require 'game'
 
 RSpec.describe 'Game::Board' do
