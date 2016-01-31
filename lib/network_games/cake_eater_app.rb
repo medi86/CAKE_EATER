@@ -51,15 +51,24 @@ class NetworkGames
       @status = :registration
       timer.register :game_start, registration_time do
         @status = :in_progress
+        countdown
       end
     end
 
+    def countdown
+      timer.register(:game_tick, 1) {
+        game.tick
+        countdown
+      }
+    end
+
     def call(env)
-      status, headers, body = 200, {}, []
+      status, headers, body = 404, {}, []
       case env['PATH_INFO']
       when '/cake_eater'
         json = {status: self.status, cake_remaining: game.cake_remaining, leaderboard: game.leaderboard}
         body << JSON.dump(json)
+        status = 200
       when %r(^/cake_eater/robots/(.+))
         team_name = $1
         username  = authenticate(env['HTTP_AUTHORIZATION'])
@@ -77,10 +86,32 @@ class NetworkGames
           status = 403
           team_name == username
         else
-          json = game.look team_name
-          json[:actions] = [:eat_cake, :move_north, :move_east, :move_south, :move_west]
-          body << JSON.dump(json)
-          status = 200
+          valid_actions = {
+            'eat_cake'   => lambda { game.eat_cake   team_name },
+            'move_north' => lambda { game.move_north team_name },
+            'move_east'  => lambda { game.move_east  team_name },
+            'move_south' => lambda { game.move_south team_name },
+            'move_west'  => lambda { game.move_west  team_name },
+          }
+          if env['REQUEST_METHOD'] == 'PUT'
+            input = JSON.parse(env['rack.input'].read)
+            if valid_actions.key? input['action']
+              valid_actions[input['action']].call
+              status = 200
+            else
+              status = 400
+            end
+          elsif env['REQUEST_METHOD'] == 'GET'
+            status = 200
+          end
+          if status == 400
+            input = {error: "#{input['action'].inspect} is not a valid action."}
+            body << JSON.dump(input)
+          elsif env['REQUEST_METHOD'] == 'GET' || env['REQUEST_METHOD'] == 'PUT'
+            json = game.look team_name
+            json[:actions] = valid_actions.keys
+            body << JSON.dump(json)
+          end
         end
       else raise "UNHANDLED PATH: #{env['PATH_INFO']}"
       end
