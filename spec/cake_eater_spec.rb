@@ -30,11 +30,10 @@ RSpec.describe 'NetworkGames::CakeEater' do
 
   it 'assigns a random non-occupied space to each robot that joins' do
     xy_coords = 100.times.map do
-      json = ce_for("# \n C").join(name: 'Josh', x: 2, y: 1)
+      json = ce_for("# \n C").join(name: 'Josh')
       [json[:x], json[:y]]
     end
-    expect(xy_coords.uniq.length).to_not eq 1
-    expect(xy_coords.sort).to eq [[0, 1], [1, 0]]
+    expect(xy_coords.uniq.sort).to eq [[0, 1], [1, 0]]
   end
 
   it 'lets multiple robots join' do
@@ -46,7 +45,8 @@ RSpec.describe 'NetworkGames::CakeEater' do
   it 'does not allow multiple players to join with the same name' do
     ce = ce_for("  \n  ")
     expect(ce.join(name: 'p1', x: 1, y: 0)).to be_a_kind_of Hash
-    expect(ce.join(name: 'p2', x: 0, y: 0).fetch(:id)).to eq nil
+    expect(ce.join(name: 'p1', x: 0, y: 0)).to eq nil
+    expect(ce.join(name: 'p2', x: 0, y: 0)).to be_a_kind_of Hash
   end
 
   it 'does not allow robots to join the game once it has reached its capacity' do
@@ -57,57 +57,57 @@ RSpec.describe 'NetworkGames::CakeEater' do
   end
 
   it 'is over when all the cake is eaten' do
-    ce = ce_for("# \n C")
-    id = ce.join(name: 'p1', x: 1, y: 0).fetch(:id)
-    ce.move_west(id)
+    ce = ce_for("C \n C")
+    ce.join(name: 'p1', x: 1, y: 0)
+    ce.move_west('p1')
     ce.tick
-    ce.eat_cake(id)
+    ce.eat_cake('p1')
     ce.tick
-    ce.move_south(id)
+    ce.move_south('p1')
     ce.tick
-    ce.move_east(id)
+    ce.move_east('p1')
     ce.tick
-    ce.eat_cake(id)
+    ce.eat_cake('p1')
     expect(ce).to_not be_over
     ce.tick
     expect(ce).to     be_over
   end
 
   it 'records each robot\'s number of moves' do
-    ce = ce_for("# \n C")
-    id = ce.join(name: 'p1', x: 1, y: 0).fetch(:id)
-    ce.move_west(id)
-    expect(ce.num_moves id).to eq 0
+    ce = ce_for("  \n C")
+    ce.join(name: 'p1', x: 1, y: 0)
+    ce.move_west('p1')
+    expect(ce.num_moves 'p1').to eq 0
     ce.tick
-    expect(ce.num_moves id).to eq 1
+    expect(ce.num_moves 'p1').to eq 1
     ce.tick
-    expect(ce.num_moves id).to eq 1
+    expect(ce.num_moves 'p1').to eq 1
   end
 
   specify 'multiple moves in the same clock tick override each other' do
     ce = ce_for("# \n C")
-    id = ce.join(name: 'p1', x: 1, y: 0).fetch(:id)
-    ce.move_west(id)
-    ce.move_south(id)
+    ce.join(name: 'p1', x: 1, y: 0)
+    ce.move_west('p1')
+    ce.move_south('p1')
     ce.tick
-    expect(ce.num_moves id).to eq 1
-    expect(ce.coords id).to eq x: 1, y: 0
+    expect(ce.num_moves 'p1').to eq 1
+    expect(ce.coords 'p1').to eq x: 1, y: 1
   end
 
   it 'sets the winner to be the robot that ate the most cake' do
     ce = ce_for("  \n C\nCC")
-    p1 = ce.join(name: 'p1', x: 1, y: 0).fetch(:id)
-    p2 = ce.join(name: 'p2', x: 1, y: 0).fetch(:id)
-    ce.move_south(p1)
-    ce.move_south(p2)
+    ce.join(name: 'p1', x: 1, y: 0)
+    ce.join(name: 'p2', x: 0, y: 0)
+    ce.move_south('p1')
+    ce.move_south('p2')
     ce.tick
-    ce.eat_cake(p1)
+    ce.eat_cake('p1')
     ce.tick
-    ce.move_south(p1)
-    ce.move_south(p2)
+    ce.move_south('p1')
+    ce.move_south('p2')
     ce.tick
-    ce.eat_cake(p1)
-    ce.eat_cake(p2)
+    ce.eat_cake('p1')
+    ce.eat_cake('p2')
     ce.tick
     expect(ce).to be_over
     expect(ce.leaderboard).to eq [
@@ -116,12 +116,24 @@ RSpec.describe 'NetworkGames::CakeEater' do
     ]
   end
 
+  it 'starts players with a score of 0, and gives them 1 point for each piece of cake they eat' do
+    ce = ce_for("  \n C\nCC")
+    p1 = ce.join(name: 'p1', x: 1, y: 0)
+    expect(p1[:score]).to eq 0
+    ce.move_south('p1')
+    ce.tick
+    ce.eat_cake('p1')
+    expect(ce.look('p1')[:score]).to eq 0
+    ce.tick
+    expect(ce.look('p1')[:score]).to eq 1
+  end
+
   it 'allows the robot to look around' do
     ce = ce_for("  \n C")
-    p1 = ce.join(name: 'p1', x: 1, y: 0).fetch(:id)
-    p2 = ce.join(name: 'p2', x: 0, y: 0).fetch(:id)
+    ce.join(name: 'p1', x: 1, y: 0)
+    ce.join(name: 'p2', x: 0, y: 0)
 
-    expect(ce.look p1).to eq name: 'p1', x: 1, y: 0, grid: [
+    expect(ce.look 'p1').to eq name: 'p1', x: 1, y: 0, score: 0, grid: [
         {x: 0, y: -1, contents: [{type: :off_map}]},
         {x: 1, y: -1, contents: [{type: :off_map}]},
         {x: 2, y: -1, contents: [{type: :off_map}]},
@@ -136,57 +148,57 @@ RSpec.describe 'NetworkGames::CakeEater' do
 
   it 'allows multiple looks per robot per tick of the clock, they are not moves' do
     ce = ce_for("  \n C")
-    id = ce.join(name: 'p1', x: 1, y: 0).fetch(:id)
-    expect(ce.look(id)[:x]).to eq 1
-    ce.move_west(id)
-    expect(ce.look(id)[:x]).to eq 1
-    expect(ce.look(id)[:x]).to eq 1
-    expect(ce.num_moves id).to eq 0
+    ce.join(name: 'p1', x: 1, y: 0)
+    expect(ce.look('p1')[:x]).to eq 1
+    ce.move_west('p1')
+    expect(ce.look('p1')[:x]).to eq 1
+    expect(ce.look('p1')[:x]).to eq 1
+    expect(ce.num_moves 'p1').to eq 0
     ce.tick
-    expect(ce.look(id)[:x]).to eq 0
-    expect(ce.num_moves id).to eq 1
+    expect(ce.look('p1')[:x]).to eq 0
+    expect(ce.num_moves 'p1').to eq 1
   end
 
   it 'allows players to move north/east/south/west' do
     ce = ce_for("  \n C")
-    id = ce.join(name: 'p1', x: 0, y: 0).fetch(:id)
+    ce.join(name: 'p1', x: 0, y: 0)
 
-    ce.move_east(id)
+    ce.move_east('p1')
     ce.tick
-    expect(ce.coords id).to eq x: 1, y: 0
+    expect(ce.coords 'p1').to eq x: 1, y: 0
 
-    ce.move_south(id)
+    ce.move_south('p1')
     ce.tick
-    expect(ce.coords id).to eq x: 1, y: 1
+    expect(ce.coords 'p1').to eq x: 1, y: 1
 
-    ce.move_west(id)
+    ce.move_west('p1')
     ce.tick
-    expect(ce.coords id).to eq x: 0, y: 1
+    expect(ce.coords 'p1').to eq x: 0, y: 1
 
-    ce.move_north(id)
+    ce.move_north('p1')
     ce.tick
-    expect(ce.coords id).to eq x: 0, y: 0
+    expect(ce.coords 'p1').to eq x: 0, y: 0
   end
 
   it 'does not allow players to move into walls or off the board' do
     ce = ce_for(" #\n  ")
-    id = ce.join(name: 'p1', x: 0, y: 0).fetch(:id)
+    ce.join(name: 'p1', x: 0, y: 0)
 
     # into walls
-    ce.move_east id
+    ce.move_east 'p1'
     ce.tick
-    expect(ce.look(id)[:x]).to eq 0
+    expect(ce.look('p1')[:x]).to eq 0
 
     # off the board
-    ce.move_west id
+    ce.move_west 'p1'
     ce.tick
-    expect(ce.look(id)[:x]).to eq 0
+    expect(ce.look('p1')[:x]).to eq 0
 
     # into available space
-    expect(ce.look(id)[:y]).to eq 0
-    ce.move_south id
+    expect(ce.look('p1')[:y]).to eq 0
+    ce.move_south 'p1'
     ce.tick
-    expect(ce.look(id)[:y]).to eq 1
+    expect(ce.look('p1')[:y]).to eq 1
   end
 end
 

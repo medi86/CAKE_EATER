@@ -46,6 +46,10 @@ class NetworkGames
       @tiles[obj.object_id] = [obj, x, y]
     end
 
+    def remove(obj)
+      @tiles.delete obj.object_id
+    end
+
     def at(x:, y:)
       return [Offmap.new] if x < 0 || y < 0 || width <= x || height <= y
       @tiles.select { |id, (obj, objx, objy)| x == objx && y == objy }
@@ -61,6 +65,14 @@ class NetworkGames
       at(x: x, y: y).all? &:traversable?
     end
 
+    def find_empties
+      width.times.flat_map do |x|
+        height.times
+              .select { |y| at(x: x, y: y).empty? }
+              .map    { |y| [x, y] }
+      end
+    end
+
     def update
       @queue.each do |object, x, y|
         @tiles[object.object_id] = [object, x, y]
@@ -74,9 +86,29 @@ class NetworkGames
       [objx+x, objy+y]
     end
 
-    def move_east(obj)  @queue << [obj, *relative_position(obj, x:  1)] end
-    def move_west(obj)  @queue << [obj, *relative_position(obj, x: -1)] end
-    def move_south(obj) @queue << [obj, *relative_position(obj, y:  1)] end
-    def move_north(obj) @queue << [obj, *relative_position(obj, y: -1)] end
+    def move_north(obj) move obj, :north end
+    def move_east(obj)  move obj, :east  end
+    def move_south(obj) move obj, :south end
+    def move_west(obj)  move obj, :west  end
+
+    def move(obj, direction)
+      xoff, yoff = 0, 0
+      yoff = -1 if direction == :north
+      xoff =  1 if direction == :east
+      yoff =  1 if direction == :south
+      xoff = -1 if direction == :west
+      x, y = relative_position(obj, x: xoff, y: yoff)
+      @queue << [obj, x, y]
+    end
+
+    def locate(obj)
+      _, x, y = @tiles[obj.object_id]
+      [x, y]
+    end
+
+    include Enumerable
+    def each(&block)
+      @tiles.each { |id, (obj, x, y)| block.call obj, x, y }
+    end
   end
 end
