@@ -130,17 +130,21 @@ RSpec.describe 'NetworkGames::CakeEater' do
     ce.join(name: 'p1', x: 1, y: 0)
     ce.join(name: 'p2', x: 0, y: 0)
 
-    expect(ce.look 'p1').to eq name: 'p1', x: 1, y: 0, score: 0, grid: [
-        {x: 0, y: -1, contents: [{type: :off_map}]},
-        {x: 1, y: -1, contents: [{type: :off_map}]},
-        {x: 2, y: -1, contents: [{type: :off_map}]},
-        {x: 0, y:  0, contents: [{type: :robot, name: 'p2'}]},
-        {x: 1, y:  0, contents: [{type: :robot, name: 'p1'}]},
-        {x: 2, y:  0, contents: [{type: :off_map}]},
-        {x: 0, y:  1, contents: []},
-        {x: 1, y:  1, contents: [{type: :cake}]},
-        {x: 2, y:  1, contents: [{type: :off_map}]},
-      ]
+    expected = {name: 'p1', x: 1, y: 0, score: 0, plan: nil, grid: [
+      {x: 0, y: -1, contents: [{type: :off_map}]},
+      {x: 1, y: -1, contents: [{type: :off_map}]},
+      {x: 2, y: -1, contents: [{type: :off_map}]},
+      {x: 0, y:  0, contents: [{type: :robot, name: 'p2'}]},
+      {x: 1, y:  0, contents: [{type: :robot, name: 'p1'}]},
+      {x: 2, y:  0, contents: [{type: :off_map}]},
+      {x: 0, y:  1, contents: []},
+      {x: 1, y:  1, contents: [{type: :cake}]},
+      {x: 2, y:  1, contents: [{type: :off_map}]},
+    ]}
+
+    expect(ce.look 'p1').to eq expected
+    ce.eat_cake 'p1'
+    expect(ce.look 'p1').to eq expected.merge(plan: :eat)
   end
 
   it 'allows multiple looks per robot per tick of the clock, they are not moves' do

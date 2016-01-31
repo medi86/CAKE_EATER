@@ -69,10 +69,12 @@ class NetworkGames
     end
 
     def look(name)
+      return nil unless robots.key? name
       robot = robots[name]
       { name:  robot.name,
         score: robot.score,
         **robot.position,
+        plan:  robot.plan,
         grid: robot.grid_coords.map { |coords|
           { **coords, contents: board.at(coords).map { |obj|
               {type: obj.type}.tap { |h| h[:name] = obj.name if obj.type == :robot }
@@ -102,6 +104,10 @@ class NetworkGames
       robots.map { |name, robot| robot }
             .sort_by { |robot| -robot.score }
             .map { |robot| {name: robot.name, score: robot.score} }
+    end
+
+    def cake_remaining
+      board.count { |obj| obj.type == :cake }
     end
 
     private
