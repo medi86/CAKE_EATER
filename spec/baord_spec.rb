@@ -1,15 +1,15 @@
 require 'spec_helper'
-require 'game'
+require 'network_games'
 
-RSpec.describe 'Game::Board' do
+RSpec.describe 'NetworkGames::Board' do
   it 'blows up if defined from unspecified ascii' do
-    Game::Board.from_ascii " ", tiles: {' ' => nil}
-    expect { Game::Board.from_ascii " ", tiles: {'a' => nil} }
-      .to raise_error Game::Board::InvalidAscii
+    NetworkGames::Board.from_ascii " ", tiles: {' ' => nil}
+    expect { NetworkGames::Board.from_ascii " ", tiles: {'a' => nil} }
+      .to raise_error NetworkGames::Board::InvalidAscii
   end
 
   def board_for(ascii_map)
-    Game::Board.from_ascii ascii_map, tiles: {'W' => Game::Board::Wall , 'R' => Game::Board::Robot, ' ' => nil}
+    NetworkGames::Board.from_ascii ascii_map, tiles: {'W' => NetworkGames::Board::Wall , 'R' => NetworkGames::Board::Robot, ' ' => nil}
   end
 
   it 'knows what is on each tile' do

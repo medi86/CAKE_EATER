@@ -1,4 +1,4 @@
-class Game
+class NetworkGames
   class Board
     InvalidAscii = Class.new RuntimeError
 
@@ -66,7 +66,7 @@ class Game
 end
 
 
-class Game
+class NetworkGames
   class Board
     class Wall
       def traversable?
