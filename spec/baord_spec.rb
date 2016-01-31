@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'network_games'
+require 'network_games/board'
 
 RSpec.describe 'NetworkGames::Board' do
   it 'blows up if defined from unspecified ascii' do
