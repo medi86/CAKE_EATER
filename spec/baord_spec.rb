@@ -110,6 +110,6 @@ RSpec.describe 'NetworkGames::Board' do
 
   it 'enumerates over its elements' do
     board = board_for "R W"
-    expect(board.map { |obj, x, y| obj.type }).to eq [:robot, :wall]
+    expect(board.map &:type).to eq [:robot, :wall]
   end
 end

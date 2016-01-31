@@ -2,14 +2,15 @@ require 'network_games/board'
 
 class NetworkGames
   class CakeEater
-    class Cake
+    class Cake < Board::Tile
       def traversable?() true end
       def type() :cake end
     end
 
-    class Robot < NetworkGames::Board::Robot
+    class Robot < Board::Robot
       attr_reader :name, :move, :score, :num_moves
-      def initialize(name:, score: 0, num_moves: 0)
+      def initialize(name:, score: 0, num_moves: 0, **kwrest)
+        super(**kwrest)
         @name      = name
         @score     = score
         @num_moves = num_moves
@@ -38,9 +39,9 @@ class NetworkGames
       return nil if @robots.any? { |robot_name, robot| robot_name == name }
       x, y  = find_xy(x, y)
       return nil if !x
-      robot = Robot.new(name: name)
+      robot = Robot.new(name: name, x: x, y: y)
       robots[name] = robot
-      board.add robot, x: x, y: y
+      board.add robot
       { name: name, x: x, y: y, score: 0 }
     end
 
@@ -55,17 +56,16 @@ class NetworkGames
         .select { |robot| robot.move }
         .each { |robot|
           if robot.move == :eat
-            x, y = board.locate(robot)
-            cake = board.at(x: x, y: y).find { |element| element.type == :cake }
+            cake = board.at(robot.position).find { |element| element.type == :cake }
             next unless cake
             board.remove cake
             robot.make_move
             robot.eat cake
           else
-            x, y = board.locate(robot)
-            x += robot.move[:xoff]
-            y += robot.move[:yoff]
-            next unless board.traversable?(x: x, y: y)
+            x = robot.move[:xoff]
+            y = robot.move[:yoff]
+            xy = robot.relative_position(x: x, y: y)
+            next unless board.traversable?(xy)
             board.move_relative robot, robot.make_move
           end
           robot.will_move nil
@@ -75,15 +75,15 @@ class NetworkGames
 
     def look(name)
       robot = robots[name]
-      x, y = board.locate robot
+      xy    = robot.position
       { name:  robot.name,
         score: robot.score,
-        x: x,
-        y: y,
+        x: xy[:x],
+        y: xy[:y],
         grid: [-1, 0, 1].flat_map { |yoff|
           [-1, 0, 1].map { |xoff|
-            xcrnt    = x + xoff
-            ycrnt    = y + yoff
+            xcrnt    = xy[:x] + xoff
+            ycrnt    = xy[:y] + yoff
             contents = board.at(x: xcrnt, y: ycrnt).map do |obj|
               content = {type: obj.type}
               content[:name] = obj.name if obj.type == :robot
@@ -108,8 +108,7 @@ class NetworkGames
     end
 
     def coords(name)
-      x, y = board.locate robots[name]
-      {x: x, y: y}
+      robots[name].position
     end
 
     def leaderboard

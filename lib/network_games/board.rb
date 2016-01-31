@@ -2,19 +2,43 @@ class NetworkGames
   class Board
     InvalidAscii = Class.new RuntimeError
 
-    class Wall
-      def traversable?() false end
-      def type() :wall end
+    class Tile
+      attr_reader :x, :y
+      def initialize(x:, y:)
+        move! x: x, y: y
+      end
+      def at?(x:, y:)
+        x() == x && y() == y
+      end
+      def position
+        {x: x, y: y}
+      end
+      def move!(x: x, y: y)
+        @x, @y = x, y
+      end
+      def relative_position(x:, y:)
+        {x: x()+x, y: y()+y}
+      end
+      def traversable?
+        true
+      end
+      def type
+        self.class.name.to_s.split("::").last.gsub(/([a-z])([A-Z])/, "\\1_\\2").downcase.intern
+      end
     end
 
-    class Robot
+    class Wall < Tile
+      def traversable?
+        false
+      end
+    end
+
+    class Robot < Tile
       def traversable?() true end
-      def type() :robot end
     end
 
-    class Offmap
+    class OffMap < Tile
       def traversable?() false end
-      def type() :off_map end
     end
 
 
@@ -27,7 +51,7 @@ class NetworkGames
             raise InvalidAscii, "#{char.inspect} not in #{tiles.keys.inspect}"
           end
           next unless klass
-          board.add klass.new, x: x, y: y
+          board.add klass.new(x: x, y: y)
         end
       end
       board
@@ -38,27 +62,30 @@ class NetworkGames
       @width  = width
       @height = height
       @queue  = []
-      @tiles  = {}
+      @tiles  = []
       yield self if block_given?
     end
 
-    def add(obj, x:, y:)
-      @tiles[obj.object_id] = [obj, x, y]
+    def add(obj)
+      @tiles << obj
+      self
     end
 
     def remove(obj)
-      @tiles.delete obj.object_id
+      @tiles.delete obj
+      self
     end
 
     def at(x:, y:)
-      return [Offmap.new] if x < 0 || y < 0 || width <= x || height <= y
-      @tiles.select { |id, (obj, objx, objy)| x == objx && y == objy }
-            .map    { |id, (obj, objx, objy)| obj }
+      if x < 0 || y < 0 || width <= x || height <= y
+        return [OffMap.new(x: x, y: y)]
+      else
+        @tiles.select { |obj| obj.at? x: x, y: y }
+      end
     end
 
     def at_relative(obj, x:0, y:0)
-      x, y = relative_position(obj, x: x, y: y)
-      at x: x, y: y
+      at obj.relative_position(x: x, y: y)
     end
 
     def traversable?(x:, y:)
@@ -74,32 +101,19 @@ class NetworkGames
     end
 
     def update
-      @queue.each do |object, x, y|
-        @tiles[object.object_id] = [object, x, y]
-      end
+      @queue.each { |object, coords| object.move! coords }
       @queue = []
       self
     end
 
-    def relative_position(obj, x:0, y:0)
-      _, objx, objy = @tiles[obj.object_id]
-      [objx+x, objy+y]
-    end
-
     def move_relative(obj, xoff: 0, yoff: 0)
-      x, y = locate obj
-      @queue << [obj, x+xoff, y+yoff]
+      @queue << [obj, obj.relative_position(x: xoff, y: yoff)]
       self
-    end
-
-    def locate(obj)
-      _, x, y = @tiles[obj.object_id]
-      [x, y]
     end
 
     include Enumerable
     def each(&block)
-      @tiles.each { |id, (obj, x, y)| block.call obj, x, y }
+      @tiles.each &block
     end
   end
 end
