@@ -16,6 +16,12 @@
   background.fill = 'rgb(0, 100, 120)'; // Accepts all valid css color
   background.linewidth = 0;
 
+  var ws = new WebSocket("ws://"+window.location.host)
+  ws.onmessage = function(arg) {
+    data = JSON.parse(arg.data);
+    console.log(data);
+  };
+
   // var circle = two.makeCircle(72, 100, 50);
   // circle.fill = '#FF8000';
   // circle.stroke = 'orangered';
