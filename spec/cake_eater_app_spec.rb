@@ -30,6 +30,28 @@ RSpec.describe 'NetworkGames::CakeEaterApp' do
     expect(app.game.look 'team2').to be_nil
   end
 
+  it 'renders all the currently interesting information when asked to represent itself as json' do
+    app = NetworkGames::CakeEaterApp.new ascii_board: " #\n C", users: [{username: 'p1', password: 'secret'}]
+    app.game.move_south 'p1'
+    coords = app.game.coords 'p1'
+    x, y = coords[:x], coords[:y]
+    expect(app.as_json).to eq({
+      status: :registration,
+      board: {
+        height: 2,
+        width:  2,
+        tiles: [
+          { type: :wall,  x: 1, y: 0, traversable: false },
+          { type: :cake,  x: 1, y: 1, traversable: true },
+          { type: :robot, x: x, y: y, traversable: true, name: 'p1', score: 0, num_moves: 0, plan: {x: x, y: y+1} },
+        ]
+      },
+      cake_remaining: 1,
+      leaderboard: [{name: 'p1', score: 0}],
+      users: [{username: 'p1'}],
+    })
+  end
+
   describe 'GET /cake_eater' do
     specify '200 OK with contents of the leaderboard, status, and the amount of cake remaining' do
       app = NetworkGames::CakeEaterApp.new users: [{username: 'team1', password: 'secret'}]

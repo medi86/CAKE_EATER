@@ -44,6 +44,9 @@ class NetworkGames
           [-1, 0, 1].map { |xoff| relative_position x: xoff, y: yoff }
         end
       end
+      def as_json
+        {type: type, x: x, y: y, traversable: traversable?}
+      end
     end
 
     class Wall < Tile
@@ -130,6 +133,10 @@ class NetworkGames
     include Enumerable
     def each(&block)
       @tiles.each &block
+    end
+
+    def as_json
+      { height: height, width:  width, tiles:  @tiles.map(&:as_json) }
     end
   end
 end

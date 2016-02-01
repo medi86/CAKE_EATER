@@ -2,15 +2,6 @@ require 'spec_helper'
 require 'network_games/cake_eater'
 
 RSpec.describe 'NetworkGames::CakeEater' do
-  def ce_for(ascii_board)
-    board = NetworkGames::Board.from_ascii ascii_board, tiles: {
-      ' ' => nil,
-      '#' => NetworkGames::Board::Wall,
-      'C' => NetworkGames::CakeEater::Cake,
-    }
-    NetworkGames::CakeEater.new(board)
-  end
-
   it 'allows robots to join the game' do
     ce = ce_for <<~BOARD
       #####

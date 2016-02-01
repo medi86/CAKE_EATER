@@ -30,18 +30,13 @@ at_exit { observers.each &:close }
 update_websockets = lambda do
   cake_eater.timer.register :update_websockets, 1, &update_websockets
   observers.reject!(&:closed?)
-  observers.each do |websocket|
-    websocket << JSON.dump(cake_eater.game.look('team1'))
-  end
+  observers.each { |websocket| websocket << JSON.dump(cake_eater.as_json) }
 end
 update_websockets.call
 
 Reel::Server::HTTP.supervise(host, port) do |connection|
   connection.each_request do |request|
-    if request.websocket?
-      observers << request.websocket
-      next
-    end
+    next observers << request.websocket if request.websocket?
 
     # Mostly stolen from https://github.com/celluloid/reel-rack/blob/2edd5ff371a94eca79791d5312aae8065b42b714/lib/reel/rack/server.rb#L71
     options = { :method => request.method, :input => request.body.to_s, "REMOTE_ADDR" => request.remote_addr }

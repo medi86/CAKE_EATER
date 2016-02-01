@@ -27,6 +27,9 @@ class NetworkGames
       def plan_to_eat
         @plan = :eat
       end
+      def as_json
+        super.merge name: name, score: score, num_moves: num_moves, plan: @plan
+      end
     end
 
     attr_reader :board, :robots

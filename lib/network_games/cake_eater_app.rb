@@ -4,8 +4,8 @@ require 'network_games/cake_eater'
 class NetworkGames
   class CakeEaterApp
     attr_reader :board, :game, :timer, :status
-    def initialize(registration_time: 5*60, timer: TimeControl.new, users:[])
-      ascii_board = 30.times.map { Array.new(40, ' ').join }.join("\n")
+    def initialize(registration_time: 5*60, timer: TimeControl.new, users:[], ascii_board: nil)
+      ascii_board ||= 30.times.map { Array.new(40, ' ').join }.join("\n")
       @board = NetworkGames::Board.from_ascii ascii_board, tiles: {
         ' ' => nil,
         '#' => NetworkGames::Board::Wall,
@@ -29,6 +29,15 @@ class NetworkGames
       timer.register(:game_tick, 1) {
         game.tick
         countdown
+      }
+    end
+
+    def as_json
+      { status:         status,
+        board:          game.board.as_json,
+        cake_remaining: game.cake_remaining,
+        leaderboard:    game.leaderboard,
+        users:          @users.map { |h| {username: h[:username]} },
       }
     end
 
