@@ -1,8 +1,8 @@
 $LOAD_PATH.unshift File.expand_path('lib', __dir__)
 require 'network_games/cake_eater_app'
 
-host = 'localhost'
-port = 3000
+host = ENV.fetch('HOST', 'localhost')
+port = ENV.fetch('PORT', '3000').to_i
 
 users = [
   {username: 'team1', password: 'secret'},
@@ -23,7 +23,7 @@ require 'celluloid/autostart'
 require 'reel'
 require 'rack'
 
-Reel::Server::HTTP.supervise("localhost", port) do |connection|
+Reel::Server::HTTP.supervise(host, port) do |connection|
   connection.each_request do |request|
     if request.websocket?
       # var ws=new WebSocket('ws://localhost:3000'); ws.onmessage = function(arg) { console.log(arg.data) };
