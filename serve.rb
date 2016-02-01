@@ -37,6 +37,7 @@ update_websockets.call
 Reel::Server::HTTP.supervise(host, port) do |connection|
   connection.each_request do |request|
     next observers << request.websocket if request.websocket?
+    next if request.path == '/favicon.ico' # tired of this thing spamming my logs with failures
 
     # Mostly stolen from https://github.com/celluloid/reel-rack/blob/2edd5ff371a94eca79791d5312aae8065b42b714/lib/reel/rack/server.rb#L71
     options = { :method => request.method, :input => request.body.to_s, "REMOTE_ADDR" => request.remote_addr }
