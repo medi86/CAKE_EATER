@@ -11,17 +11,6 @@
   var params = { width: element.clientWidth, height: element.clientHeight };
   var two    = new Two(params).appendTo(element);
 
-  // The background of the game board we'll draw on
-  var background = two.makeRectangle(element.clientWidth/2, element.clientHeight/2, element.clientWidth, element.clientHeight);
-  background.fill = 'rgb(0, 100, 120)'; // Accepts all valid css color
-  background.linewidth = 0;
-
-  var ws = new WebSocket("ws://"+window.location.host)
-  ws.onmessage = function(arg) {
-    data = JSON.parse(arg.data);
-    console.log(data);
-  };
-
   // var circle = two.makeCircle(72, 100, 50);
   // circle.fill = '#FF8000';
   // circle.stroke = 'orangered';
@@ -33,6 +22,70 @@
   // var group = two.makeGroup(circle, rect);
   // background.opacity = 0.75;
 
+
+  var Tile = function(x, y) {
+    this.x        = x;
+    this.y        = y;
+    this.contents = [];
+  }
+  Tile.prototype = {
+    clear: function() {
+    }
+  }
+
+  var Game = function(gamestate) {
+    // The background of the game board we'll draw on
+    this.background = two.makeRectangle(element.clientWidth/2, element.clientHeight/2, element.clientWidth, element.clientHeight);
+    this.background.fill = 'rgb(0, 100, 120)'; // Accepts all valid css color
+    this.background.linewidth = 0;
+
+    var board      = gamestate.board;
+    var tileWidth  = element.clientHeight / board.height;
+    var tileHeight = element.clientWidth  / board.width;
+    this.tiles = [];
+    for(var y=0; y<board.height; ++y) {
+      var row = [];
+      for(var x=0; x<board.width; ++x) row.push(new Tile(x*tileWidth, y*tileHeight));
+      this.tiles.push(row);
+    }
+    this.robots = [];
+    this.update(gamestate);
+  }
+
+  Game.prototype = {
+    update: function(gamestate) {
+      this.gamestate = gamestate;
+      var board = gamestate.board;
+      board.tiles.forEach(function(tileContent) {
+        // var tile = this.tiles[tileContent.y][tileContent.x];
+        // var representation = ??;
+        // tile.add(representation);
+      });
+
+      // gamesate.status;
+      // gamesate.cake_remaining;
+      // gamesate.leaderboard; // [ [{name: 'p1', score: 0}],
+      // var board = gamesate.board;
+      // baord.height;
+      // baord.width;
+      // baord.tiles; // [ { type: :wall,  x: 1, y: 0, traversable: false }, { type: :cake,  x: 1, y: 1, traversable: true }, { type: :robot, x: x, y: y, traversable: true, name: 'p1', score: 0, num_moves: 0, plan: {x: x, y: y+1} } ]
+    },
+    clearBoard: function() {
+      this.tiles.forEach(function(row) {
+        row.forEach(function(tile) { tile.clear() });
+      });
+    }
+  }
+
+  var game = null;
+  var ws   = new WebSocket("ws://"+window.location.host)
+  ws.onmessage = function(message) {
+    var gamesate = JSON.parse(message.data);
+    if(game === null)
+      game = new Game(gamesate);
+    else
+      game.update(gamesate);
+  };
   function animate() {
     requestAnimationFrame(animate);
     two.update();

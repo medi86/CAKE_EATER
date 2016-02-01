@@ -30,7 +30,12 @@ at_exit { observers.each &:close }
 update_websockets = lambda do
   cake_eater.timer.register :update_websockets, 1, &update_websockets
   observers.reject!(&:closed?)
-  observers.each { |websocket| websocket << JSON.dump(cake_eater.as_json) }
+  observers.each { |websocket|
+    begin
+      websocket << JSON.dump(cake_eater.as_json)
+    rescue Reel::SocketError
+    end
+  }
 end
 update_websockets.call
 
@@ -50,7 +55,7 @@ Reel::Server::HTTP.supervise(host, port) do |connection|
     # This bit I made up :P
     env      = Rack::MockRequest.env_for(request.url, options)
     filepath = File.join(public_dir, env['PATH_INFO'])
-    if File.exist? filepath
+    if File.file? filepath
       body    = File.read(filepath)
       ext     = File.extname(filepath)
       type    = {'.js' => 'text/javascript', '.html' => 'text/html'}.fetch(ext)
