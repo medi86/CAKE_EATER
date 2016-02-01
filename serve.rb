@@ -47,8 +47,8 @@ Reel::Server::HTTP.supervise(host, port) do |connection|
       if File.exist? filepath
         body    = File.read(filepath)
         ext     = File.extname(filepath)
-        type    = {'.js' => 'text/javascript;charset=utf-8'}.fetch(ext)
-        headers = {'Content-Length' => body.bytesize, 'Content-Type' => type}
+        type    = {'.js' => 'text/javascript', '.html' => 'text/html'}.fetch(ext)
+        headers = {'Content-Length' => body.bytesize, 'Content-Type' => "#{type}; charset=UTF-8"}
         status  = 200
       else
         status, headers, body = cake_eater.call(env)

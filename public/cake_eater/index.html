@@ -1,0 +1,35 @@
+<script src="/js/two.js"></script>
+
+<body style="background: #666;">
+  <div id="game-board" style="width:100%; height:100%">
+  </div>
+</body>
+
+<script>
+  // Make a Two instance of two and place it on the page.
+  var element = document.getElementById('game-board');
+  var params = { width: element.clientWidth, height: element.clientHeight };
+  var two    = new Two(params).appendTo(element);
+
+  // The background of the game board we'll draw on
+  var background = two.makeRectangle(element.clientWidth/2, element.clientHeight/2, element.clientWidth, element.clientHeight);
+  background.fill = 'rgb(0, 100, 120)'; // Accepts all valid css color
+  background.linewidth = 0;
+
+  // var circle = two.makeCircle(72, 100, 50);
+  // circle.fill = '#FF8000';
+  // circle.stroke = 'orangered';
+  // circle.linewidth = 5;
+
+  // rect.rotation += 0.1
+  // rect.translation.set(100, 100)
+  // rect.noStroke();
+  // var group = two.makeGroup(circle, rect);
+  // background.opacity = 0.75;
+
+  function animate() {
+    requestAnimationFrame(animate);
+    two.update();
+  }
+  animate();
+</script>
