@@ -1,8 +1,9 @@
 $LOAD_PATH.unshift File.expand_path('lib', __dir__)
 require 'network_games/cake_eater_app'
 
-host = ENV.fetch('HOST', 'localhost')
-port = ENV.fetch('PORT', '3000').to_i
+public_dir = File.expand_path('public', __dir__)
+host       = ENV.fetch('HOST', 'localhost')
+port       = ENV.fetch('PORT', '3000').to_i
 
 users = [
   {username: 'team1', password: 'secret'},
@@ -39,9 +40,21 @@ Reel::Server::HTTP.supervise(host, port) do |connection|
         header = "HTTP_#{header}" unless header == 'CONTENT_TYPE' || header == 'CONTENT_LENGTH'
         options[header] = value
       }
-      env = ::Rack::MockRequest.env_for(request.url, options)
-      status, headers, body = cake_eater.call(env)
-      request.respond status, headers, body.join("\n")
+
+      # This bit I made up :P
+      env      = Rack::MockRequest.env_for(request.url, options)
+      filepath = File.join(public_dir, env['PATH_INFO'])
+      if File.exist? filepath
+        body    = File.read(filepath)
+        ext     = File.extname(filepath)
+        type    = {'.js' => 'text/javascript;charset=utf-8'}.fetch(ext)
+        headers = {'Content-Length' => body.bytesize, 'Content-Type' => type}
+        status  = 200
+      else
+        status, headers, body = cake_eater.call(env)
+        body = body.join("\n")
+      end
+      request.respond status, headers, body
     end
   end
 end
