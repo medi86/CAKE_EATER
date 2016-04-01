@@ -60,12 +60,12 @@ end
 
 
 if __FILE__ == $PROGRAM_NAME
-  app   = Shoes.app width: 500, height: 500
+  app   = Shoes.app width: 900, height: 1000
   board = Board.new(app)
 
   require 'json'
 
-  app.every 0.2 do
+  app.every 0.3 do
     filename = 'board.json'
     if File.exist? filename
       data = JSON.parse File.read(filename)
