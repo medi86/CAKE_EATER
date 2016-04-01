@@ -1,1 +1,4 @@
 coverage
+board.json
+vendor
+.bundle

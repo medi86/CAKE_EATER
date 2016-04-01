@@ -29,6 +29,8 @@ GEM
       method_source (~> 0.8.1)
       slop (~> 3.4)
     rack (1.6.4)
+    rack-protection (1.5.3)
+      rack
     rack-test (0.6.3)
       rack (>= 1.0)
     reel (0.5.0)
@@ -56,7 +58,12 @@ GEM
       json (~> 1.8)
       simplecov-html (~> 0.10.0)
     simplecov-html (0.10.0)
+    sinatra (1.4.7)
+      rack (~> 1.5)
+      rack-protection (~> 1.4)
+      tilt (>= 1.3, < 3)
     slop (3.6.0)
+    tilt (2.0.2)
     timers (1.1.0)
     websocket_parser (0.1.6)
     what_weve_got_here_is_an_error_to_communicate (0.0.7)
@@ -75,6 +82,7 @@ DEPENDENCIES
   reel
   rspec
   simplecov
+  sinatra
 
 BUNDLED WITH
    1.11.2

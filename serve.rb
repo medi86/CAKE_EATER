@@ -2,7 +2,7 @@ $LOAD_PATH.unshift File.expand_path('lib', __dir__)
 require 'network_games/cake_eater_app'
 
 public_dir = File.expand_path('public', __dir__)
-host       = ENV.fetch('HOST', 'localhost')
+host       = ENV.fetch('HOST', '10.10.10.61')
 port       = ENV.fetch('PORT', '3000').to_i
 
 users = [
@@ -10,7 +10,18 @@ users = [
   {username: 'team2', password: 'secrets'},
 ]
 
-cake_eater = NetworkGames::CakeEaterApp.new users: users, registration_time: 5*60
+ascii_board = <<~BOARD
+##########
+#C   #   #
+# C  #   #
+#    # C #
+####     #
+#    #   #
+#    #   #
+##########
+BOARD
+
+cake_eater = NetworkGames::CakeEaterApp.new users: users, registration_time: 10, ascii_board: ascii_board
 
 Thread.new do
   Thread.current.abort_on_exception = true

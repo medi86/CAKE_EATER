@@ -1,5 +1,6 @@
 require 'network_games/time_control'
 require 'network_games/cake_eater'
+require 'json'
 
 class NetworkGames
   class CakeEaterApp
@@ -27,8 +28,9 @@ class NetworkGames
 
     def countdown
       timer.register(:game_tick, 1) {
-        game.tick
         countdown
+        game.tick
+        File.write 'board.json', as_json.to_json
       }
     end
 
@@ -94,6 +96,7 @@ class NetworkGames
         end
       else raise "UNHANDLED PATH: #{env['PATH_INFO']}"
       end
+
       [status, headers, body]
     end
 

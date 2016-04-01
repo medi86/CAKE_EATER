@@ -2,6 +2,7 @@ source 'https://rubygems.org'
 
 gem 'rack'
 gem 'reel'
+gem 'sinatra'
 
 group :test do
   gem 'rspec'
