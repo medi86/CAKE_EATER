@@ -27,7 +27,7 @@ class NetworkGames
     end
 
     def countdown
-      timer.register(:game_tick, 1) {
+      timer.register(:game_tick, 0.1) {
         countdown
         game.tick
         File.write 'board.json', as_json.to_json

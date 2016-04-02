@@ -196,9 +196,8 @@ RSpec.describe 'NetworkGames::CakeEaterApp' do
         page.authorize 'team1', 'secret'
         response = page.put '/cake_eater/robots/team1', {}, input: JSON.dump(action: :eat_cake)
         expect(response.status).to eq 200
-        expect(app.game.leaderboard[0][:score]).to eq 0
         app.timer.call(:game_start)
-        expect(app.timer.remaining :game_tick).to be_within(0.1).of(1)
+        expect(app.game.leaderboard[0][:score]).to eq 0
         app.timer.call(:game_tick)
         expect(app.game.leaderboard[0][:score]).to eq 1
       end
@@ -217,7 +216,6 @@ RSpec.describe 'NetworkGames::CakeEaterApp' do
         expect(response.status).to eq 200
         expect(app.game.leaderboard[0][:score]).to eq 0
         app.timer.call(:game_start)
-        expect(app.timer.remaining :game_tick).to be_within(0.1).of(1)
         app.timer.call(:game_tick)
         expect(app.game.leaderboard[0][:score]).to eq 0
       end

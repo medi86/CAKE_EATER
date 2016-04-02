@@ -2,7 +2,7 @@ $LOAD_PATH.unshift File.expand_path('lib', __dir__)
 require 'network_games/cake_eater_app'
 
 public_dir = File.expand_path('public', __dir__)
-host       = ENV.fetch('HOST', '10.10.10.61')
+host       = ENV.fetch('HOST', 'localhost')
 port       = ENV.fetch('PORT', '3000').to_i
 
 users = [
@@ -48,7 +48,7 @@ ascii_board0 = <<-BOARD
 #####################################################################
 BOARD
 
-ascii_board1 = <<~BOARD
+ascii_board1 = <<-BOARD
 #########################
 #C#C C#C  #   #   #   #C#
 # # # ### # #   #   #   #
@@ -146,7 +146,7 @@ cake_eater = NetworkGames::CakeEaterApp.new users: users, registration_time: 0, 
 Thread.new do
   Thread.current.abort_on_exception = true
   loop do
-    sleep 1
+    sleep 0.1
     cake_eater.timer.check
   end
 end
@@ -159,7 +159,7 @@ require 'rack'
 observers = []
 at_exit { observers.each &:close }
 update_websockets = lambda do
-  cake_eater.timer.register :update_websockets, 1, &update_websockets
+  cake_eater.timer.register :update_websockets, 0.1, &update_websockets
   observers.reject!(&:closed?)
   observers.each { |websocket|
     begin
