@@ -141,7 +141,16 @@ ascii_board2 = <<-BOARD
 ######################################################################################################################################
 BOARD
 
-cake_eater = NetworkGames::CakeEaterApp.new users: users, registration_time: 0, ascii_board: ascii_board1
+ascii_board_small = <<-BOARD
+#########
+#       #
+# # # # #
+#C#C#C#C#
+#########
+BOARD
+
+
+cake_eater = NetworkGames::CakeEaterApp.new users: users, registration_time: 0, ascii_board: ascii_board_small
 
 Thread.new do
   Thread.current.abort_on_exception = true

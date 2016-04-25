@@ -46,7 +46,7 @@ class NetworkGames
     def call(env)
       status, headers, body = 404, {}, []
       case env['PATH_INFO']
-      when '/cake_eater'
+      when %r(^/cake_eater/?$)
         json = {status: self.status, cake_remaining: game.cake_remaining, leaderboard: game.leaderboard}
         body << JSON.dump(json)
         status = 200

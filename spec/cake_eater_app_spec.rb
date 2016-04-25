@@ -73,6 +73,16 @@ RSpec.describe 'NetworkGames::CakeEaterApp' do
         cake_remaining: app.game.cake_remaining,
         leaderboard: [{name: 'team1', score: 0}]
     end
+
+    it 'cand deal with trailing slashes' do
+      app = NetworkGames::CakeEaterApp.new users: [{username: 'team1', password: 'secret'}]
+      page = page_for(app)
+
+      response = page.get '/cake_eater/'
+      expect(response.status).to eq 200
+      json = JSON.parse response.body, symbolize_names: true
+      expect(json[:status]).to eq "registration"
+    end
   end
 
 
