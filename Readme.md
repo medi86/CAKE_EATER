@@ -31,6 +31,8 @@ API for our pairing project. You and your pair will need to write a client for i
 I'll provide the structure you should choose, to speed it along and share how
 I think things should be designed :)
 
+![Example of what you will build](cake-eater.gif)
+
 The structure
 -------------
 
