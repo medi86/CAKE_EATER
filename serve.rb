@@ -146,7 +146,7 @@ cake_eater = NetworkGames::CakeEaterApp.new users: users, registration_time: 0, 
 Thread.new do
   Thread.current.abort_on_exception = true
   loop do
-    sleep 0.1
+    sleep 2
     cake_eater.timer.check
   end
 end
